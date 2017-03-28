@@ -21,8 +21,20 @@ import android.widget.ListAdapter;
 import android.widget.TextView;
 
 
-public class SimpleListFragment extends ListFragment implements AdapterView.OnItemClickListener, LoaderManager.LoaderCallbacks<Cursor> {
+/*
+ *  Compare this implementation with the one of SimpleGridFragment.  There
+ *  are two ways to do this.  The simplest way is to create the cursor
+ *  adaptor in the onActivityCreated callback and not monkey around with
+ *  a LoaderManager.    This implementation uses a LoaderManager instead,
+ *  so it is more complicated, but also more powerful
+ */
+
+public class SimpleListFragment extends ListFragment
+        implements AdapterView.OnItemClickListener,
+                    LoaderManager.LoaderCallbacks<Cursor> {
     public static final String DEBUG_TAG = "SimpleListFragment";
+
+    SimpleCursorAdapter mAdapter;
 
     public SimpleListFragment() {
         // Required empty public constructor
@@ -51,7 +63,9 @@ public class SimpleListFragment extends ListFragment implements AdapterView.OnIt
 
     }
 
-    public static <T> void initLoader(final int loaderId, final Bundle args, final LoaderManager.LoaderCallbacks<T> callbacks,
+
+    public static <T> void initLoader(final int loaderId, final Bundle args,
+                                      final LoaderManager.LoaderCallbacks<T> callbacks,
                                       final LoaderManager loaderManager) {
         final Loader<T> loader = loaderManager.getLoader(loaderId);
         if (loader != null && loader.isReset()) {
@@ -61,23 +75,22 @@ public class SimpleListFragment extends ListFragment implements AdapterView.OnIt
         }
     }
 
+    /* remember, this is a fragment class, not an activity class, but the fragment is tied
+     * to the activity.
+     */
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        String[] requestedColumns = {
-                ContactsContract.CommonDataKinds.Phone._ID,
-                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
-                ContactsContract.CommonDataKinds.Phone.NUMBER,
-        };
-        CursorLoader loader = new CursorLoader(getActivity(),
-                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                requestedColumns, null, null, null);
-        Cursor contacts = loader.loadInBackground();
+        Log.v(DEBUG_TAG, "SimpleListFragment: onActivityCreated()");
 
-        ListAdapter adapter = new SimpleCursorAdapter(getActivity(),
+        /* this is an empty adapter which we will use later to display our data.  We fill it
+         * with a call to m_adapter.swapCursor() in onLoadFinished().   This is asynchronous
+         * which is what we want so the UI thread doesn't get delayed.
+         */
+        mAdapter =  new SimpleCursorAdapter(getActivity(),
                 R.layout.contact_list_simple,
-                contacts,
+                null,       // this is the slot for the cursor
                 new String[]{
                         ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME
                 },
@@ -85,9 +98,11 @@ public class SimpleListFragment extends ListFragment implements AdapterView.OnIt
                         R.id.contact_item_simple_text
                 }, 0);
 
-        setListAdapter(adapter);
-
+        setListAdapter(mAdapter);
         getListView().setOnItemClickListener(this);
+
+        getLoaderManager().initLoader(0,null,this);
+
     }
 
     @Override
@@ -115,8 +130,17 @@ public class SimpleListFragment extends ListFragment implements AdapterView.OnIt
                 "== list id: " + id);
     }
 
+    /*
+     * Loaders (https://developer.android.com/reference/android/content/Loader.html)
+     * provide asynchronous loading of data.  They are managed via a LoaderManager.
+     * This just creates a loader of the ContactsContract and returns it.   This is called by
+     * the LoaderManager when we call initLoader().
+     */
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+
+        Log.v(DEBUG_TAG, "SimpleListFragment: onCreateLoader()");
+
         String[] requestedColumns = {
                 ContactsContract.CommonDataKinds.Phone._ID,
                 ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
@@ -125,26 +149,6 @@ public class SimpleListFragment extends ListFragment implements AdapterView.OnIt
         CursorLoader loader = new CursorLoader(getActivity(),
                 ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
                 requestedColumns, null, null, null);
-        Cursor contacts = loader.loadInBackground();
-        ListAdapter adapter = new SimpleCursorAdapter(getActivity(),
-                R.layout.contact_list_simple,
-                contacts,
-                new String[]{
-                        ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME
-                },
-                new int[]{
-                        R.id.contact_item_simple_text
-                }, 0);
-
-        setListAdapter(adapter);
-
-        getListView().setOnItemClickListener(this);
-        Log.v(DEBUG_TAG, "First contact loaded: ");
-
-        initLoader(loader.getId(), bundle, this, getLoaderManager());
-
-//        loader.startLoading();
-//        getLoaderManager().getLoader(loader.getId()).startLoading();
         return loader;
     }
 
@@ -154,38 +158,17 @@ public class SimpleListFragment extends ListFragment implements AdapterView.OnIt
      */
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-        Log.v(DEBUG_TAG, "First contact loaded: ");
+        Log.v(DEBUG_TAG, "SimpleListFragment: onLoadFinished()");
 
-
+        // We created the adapter with a null cursor.  Now put the cursor in.  Framework
+        // will close it.   Don't know if it's necessary to check for null cursor
         if (cursor != null) {
-            final int totalCount = cursor.getCount();
-            if (totalCount > 0) {
-                cursor.moveToFirst();
-                String name = cursor
-                        .getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-//                mMessageText.setText(
-//                        getResources().getString(R.string.contacts_string, totalCount, name));
-
-                ListAdapter adapter = new SimpleCursorAdapter(getActivity(),
-                        R.layout.contact_list_simple,
-                        cursor,
-                        new String[]{
-                                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME
-                        },
-                        new int[]{
-                                R.id.contact_item_simple_text
-                        }, 0);
-
-                setListAdapter(adapter);
-
-                getListView().setOnItemClickListener(this);
-                Log.v(DEBUG_TAG, "First contact loaded: ");
-                Log.v(DEBUG_TAG, "Total number of contacts: " + totalCount);
-            } else {
-                Log.v(DEBUG_TAG, "List of contacts is empty.");
-            }
+            mAdapter.swapCursor(cursor);
         }
 
+        // The beauty of this class is that if the ListView is empty, then the TextView
+        // defined beneath it in the XML file is displayed.  If the ListView is not empty,
+        // then the TextView is suppressed.
     }
 
     @Override

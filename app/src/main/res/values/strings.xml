@@ -17,7 +17,7 @@
     <string name="i_m_second_i_need_to_wrap">I\'m second. I need to wrap.</string>
     <string name="grid_view">Grid View</string>
     <string name="main_menu">Main Menu</string>
-    <string name="empty_list">Empty list</string>
+    <string name="empty_list">No Contacts Available</string>
     <string name="okay">Ok</string>
     <string name="contacts_permission">Contacts permissions are needed to proceed</string>
     <string name="permission_denied">Permission denied</string>
