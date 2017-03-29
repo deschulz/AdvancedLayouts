@@ -25,6 +25,7 @@ import java.util.Map;
 
 public class AdaptersActivity extends AppCompatActivity
         implements ActivityCompat.OnRequestPermissionsResultCallback {
+
     private static final String[] menu = {"ContactAdapter", "ListAdapterSample"};
     private static final String DEBUG_TAG = "AdaptersActivity";
     private Map<String, Object> actions = new HashMap<>();
@@ -48,6 +49,8 @@ public class AdaptersActivity extends AppCompatActivity
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         ListView av = (ListView) findViewById(R.id.menu_list);
+
+        // Note:  simple_list_item_1 is a canned layout.  It's just a TextView
         ListAdapter adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, menu);
 
         av.setAdapter(adapter);
@@ -64,11 +67,10 @@ public class AdaptersActivity extends AppCompatActivity
                 } else {
                     Log.i(DEBUG_TAG,
                             "Contact permissions granted. Displaying contacts.");
+
                     String key = (String) parent.getItemAtPosition(position);
                     startActivity((Intent) actions.get(key));
                 }
-//                String text = (String) parent.getItemAtPosition(position);
-//                startActivity((Intent) actions.get(text));
             }
         });
     }

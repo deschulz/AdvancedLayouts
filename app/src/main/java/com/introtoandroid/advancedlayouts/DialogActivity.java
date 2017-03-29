@@ -2,12 +2,15 @@ package com.introtoandroid.advancedlayouts;
 
 
 import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.preference.DialogPreference;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 public class DialogActivity extends AppCompatActivity {
 
@@ -29,8 +32,27 @@ public class DialogActivity extends AppCompatActivity {
             public void onClick(View v) {
                 new AlertDialog.Builder(DialogActivity.this)
                         .setMessage("Press agree to continue...")
-                        .setPositiveButton("Agree", null)
+                        .setPositiveButton("Agree",
+                                new DialogInterface.OnClickListener(){
+                                    public void onClick(DialogInterface d, int id){
+                                        Toast.makeText(DialogActivity.this,
+                                                "Agree", Toast.LENGTH_SHORT).show();                                    }
+                                })
+                        .setNegativeButton("Disagree",
+                                new DialogInterface.OnClickListener(){
+                                    public void onClick(DialogInterface d, int id){
+                                        Toast.makeText(DialogActivity.this,
+                                                "Disagree", Toast.LENGTH_SHORT).show();                                    }
+                                })
+                        .setNeutralButton("Don't Care",
+                                new DialogInterface.OnClickListener(){
+                                    public void onClick(DialogInterface d, int id){
+                                        Toast.makeText(DialogActivity.this,
+                                                "Don't Care", Toast.LENGTH_SHORT).show();                                    }
+                                })
                         .show();
+
+
             }
         });
     }
